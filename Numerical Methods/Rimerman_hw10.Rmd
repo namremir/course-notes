@@ -1,0 +1,384 @@
+---
+title: "RIMERMAN_HW10"
+author: "Mitch Rimerman"
+date: "2022-11-15"
+output: pdf_document
+---
+
+```{r setup, include=FALSE, results=FALSE, message=FALSE, warning=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(viridis)
+```
+
+## Problem 1
+
+Consider the “Rosenbrock” function.
+\[
+f(x)_1,x_2) = 100(x_2-x^2_1)^2 + (1-x_1)^2.
+\]
+With a starting point $[0,0]^T$, apply two iterations of Newton’s method to minimize Rosenbrock
+function.
+
+\[
+x^{(k+1)}:=x^{(k)}-F(x^{(k)})^{-1}g^{(k)}
+\]
+Where
+\[
+g^{(k)} = \nabla f(x_1,x_2)=\begin{bmatrix}
+400x_1^3-400x_1x_2+2x_1-2 \\
+200x_2-200x_1^2
+\end{bmatrix}\quad\text{ at }x^{(k)}
+\]
+and
+\[
+F(x^{(k)})=\nabla^2f(x_1,x_2)=\begin{bmatrix}
+1200x_1^2-400x_2+2 & -400x_1 \\
+-400x_1 &  200
+\end{bmatrix}\quad\text{ at }x^{(k)}
+\]
+
+### First Iteration
+\[
+g^{(0)} = \nabla f(0,0)=\begin{bmatrix}
+-2 \\
+0
+\end{bmatrix}\quad\text{ and }\quad F(x^{(0)})=\nabla^2f(0,0)=\begin{bmatrix}
+2 & 0 \\
+0 & 200
+\end{bmatrix}
+\]
+\[
+F(x^{(0)})^{-1}=\frac{1}{400}\begin{bmatrix}
+200 & 0 \\
+0 & 2
+\end{bmatrix}
+\]
+\[
+x^{(1)}=\begin{bmatrix}
+0\\
+0
+\end{bmatrix}-\begin{bmatrix}
+1/2 & 0 \\
+0 & 1/200
+\end{bmatrix}\begin{bmatrix}
+-2 \\
+0
+\end{bmatrix}=\begin{bmatrix}
+0\\
+0
+\end{bmatrix}-\begin{bmatrix}
+-1\\
+0
+\end{bmatrix}=\begin{bmatrix}
+1\\
+0
+\end{bmatrix}
+\]
+
+### Second Iteration
+\[
+g^{(1)} = \nabla f(1,0)=\begin{bmatrix}
+400 \\
+-200
+\end{bmatrix}\quad\text{ and }\quad F(x^{(1)})=\nabla^2f(1,0)=\begin{bmatrix}
+1202 & -400 \\
+-400 &  200
+\end{bmatrix}
+\]
+\[
+F(x^{(1)})^{-1}=\frac{1}{80400}\begin{bmatrix}
+200 & 400 \\
+400 & 1202
+\end{bmatrix}
+\]
+\[
+x^{(2)}=\begin{bmatrix}
+1\\
+0
+\end{bmatrix}-\frac{1}{80400}\begin{bmatrix}
+200 & 400 \\
+400 & 1202
+\end{bmatrix}\begin{bmatrix}
+400 \\
+-200
+\end{bmatrix}=\begin{bmatrix}
+1\\
+0
+\end{bmatrix}-\frac{1}{80400}\begin{bmatrix}
+0\\
+-80400
+\end{bmatrix}=\begin{bmatrix}
+1\\
+0
+\end{bmatrix}-\begin{bmatrix}
+0\\
+-1
+\end{bmatrix}=\begin{bmatrix}
+1\\
+1
+\end{bmatrix}
+\]
+
+Thus, the first two iterates are $[1,0]^T$, followed by $[1,1]^T$.
+
+\newpage
+## Problem 2
+Let $S=\text{span}\{x_1,x_2,x_3\}$, where
+\[
+x_1=\begin{bmatrix}
+2\\
+1\\
+0\\
+0
+\end{bmatrix},\quad x_2=\begin{bmatrix}
+2\\
+2\\
+0\\
+-3
+\end{bmatrix},\quad x_3=\begin{bmatrix}
+0\\
+-1\\
+1\\
+0
+\end{bmatrix}
+\]
+Find an orthonormal basis for $S$, using the Gram-Schmidt algorithm
+\[
+\tilde{q}_1=x_1\neq0\quad\Rightarrow\quad q_1=\frac{x_1}{\lVert x_1\rVert}=\frac{1}{\sqrt{5}}\begin{bmatrix}
+2\\
+1\\
+0\\
+0
+\end{bmatrix}=\begin{bmatrix}
+2/\sqrt{5}\\
+1/\sqrt{5}\\
+0\\
+0
+\end{bmatrix}
+\]
+\begin{align*}
+\tilde{q}_2 & =x_2-(q_1^Tx_2)q_1 \\
+&=\begin{bmatrix}
+2\\
+2\\
+0\\
+-3
+\end{bmatrix}-\left(\begin{bmatrix}
+2/\sqrt{5} & 1/\sqrt{5} & 0 & 0
+\end{bmatrix}\begin{bmatrix}
+2\\
+2\\
+0\\
+-3
+\end{bmatrix}\right)\begin{bmatrix}
+2/\sqrt{5}\\
+1/\sqrt{5}\\
+0\\
+0
+\end{bmatrix} \\
+&= \begin{bmatrix}
+2\\
+2\\
+0\\
+-3
+\end{bmatrix}-\frac{6}{\sqrt{5}}\begin{bmatrix}
+2/\sqrt{5}\\
+1/\sqrt{5}\\
+0\\
+0
+\end{bmatrix} \\
+&= \begin{bmatrix}
+2\\
+2\\
+0\\
+-3
+\end{bmatrix}-\begin{bmatrix}
+12/5 \\
+6/5 \\
+0\\
+0
+\end{bmatrix} \\
+&= \begin{bmatrix}
+-2/5 \\
+4/5 \\
+0 \\
+-3
+\end{bmatrix}\neq 0
+\end{align*}
+\[
+q_2=\frac{\tilde{q}_2}{\lVert \tilde{q}_2\rVert}=\frac{\sqrt{5}}{7}\begin{bmatrix}
+-2/5 \\
+4/5 \\
+0 \\
+-3
+\end{bmatrix}=\begin{bmatrix}
+-2\sqrt{5}/35\\
+4\sqrt{5}/35\\
+0\\
+-3\sqrt{5}/7
+\end{bmatrix}
+\]
+\begin{align*}
+\tilde{q}_3 &=x_3-(q_1^Tx_3)q_1-(q_2^Tx_3)q_2 \\
+&=\begin{bmatrix}
+0\\
+-1\\
+1\\
+0
+\end{bmatrix}-\left(\begin{bmatrix}
+2/\sqrt{5} \\
+1/\sqrt{5} \\
+0 \\ 
+0
+\end{bmatrix}^T\begin{bmatrix}
+0\\
+-1\\
+1\\
+0
+\end{bmatrix}\right)\begin{bmatrix}
+2/\sqrt{5}\\
+1/\sqrt{5}\\
+0\\
+0
+\end{bmatrix}-\left(\begin{bmatrix}
+-2\sqrt{5}/35\\
+4\sqrt{5}/35\\
+0\\
+-3\sqrt{5}/7
+\end{bmatrix}^T\begin{bmatrix}
+0\\
+-1\\
+1\\
+0
+\end{bmatrix}\right)\begin{bmatrix}
+-2\sqrt{5}/35\\
+4\sqrt{5}/35\\
+0\\
+-3\sqrt{5}/7
+\end{bmatrix} \\
+&=\begin{bmatrix}
+0\\
+-1\\
+1\\
+0
+\end{bmatrix}-\frac{-1}{\sqrt{5}}\begin{bmatrix}
+2/\sqrt{5}\\
+1/\sqrt{5}\\
+0\\
+0
+\end{bmatrix}-\frac{-4\sqrt{5}}{35}\begin{bmatrix}
+-2\sqrt{5}/35\\
+4\sqrt{5}/35\\
+0\\
+-3\sqrt{5}/7
+\end{bmatrix} \\
+&=\begin{bmatrix}
+0\\
+-1\\
+1\\
+0
+\end{bmatrix}-\begin{bmatrix}
+-2/5\\
+-1/5\\
+0\\
+0
+\end{bmatrix}-\begin{bmatrix}
+8/245\\
+-16/245\\
+0\\
+12/49
+\end{bmatrix} \\
+&=
+\begin{bmatrix}
+18/49 \\
+13/49 \\
+1 \\
+-12/49
+\end{bmatrix}
+\end{align*}
+\[
+q_3=\frac{\tilde{q}_3}{\lVert \tilde{q}_3\rVert}=\frac{7\sqrt{85}}{85}\begin{bmatrix}
+18/49 \\
+-36/49 \\
+1 \\
+-12/49
+\end{bmatrix}=\begin{bmatrix}
+18\sqrt{85}/595\\
+-36\sqrt{85}/595\\
+7\sqrt{85}/85\\
+-12\sqrt{85}/595
+\end{bmatrix}
+\]
+Thus, the set of orthonormal vectors is
+\[
+\left\{\begin{bmatrix}
+2/\sqrt{5}\\
+1/\sqrt{5}\\
+0\\
+0
+\end{bmatrix},\begin{bmatrix}
+-2\sqrt{5}/35\\
+4\sqrt{5}/35\\
+0\\
+-3\sqrt{5}/7
+\end{bmatrix},\begin{bmatrix}
+18\sqrt{85}/595\\
+-36\sqrt{85}/595\\
+7\sqrt{85}/85\\
+-12\sqrt{85}/595
+\end{bmatrix} \right\}
+\]
+
+\newpage
+## Problem 3
+Write a code and implement the Gauss-Newton Method on the last example given in the
+lecture, to find $A$, $\omega$, and $\phi$ such that the resulting sinusoid
+\[y = A\text{ sin}(\omega t + \phi)\]
+best fits $(t_i,y_i)$,$i = 1,2,...,21$, with $t_1 = 0$ and $t_{21} = 10$ and $y_i$ given roughly below.
+
+Suppose the points in the graph are as follows
+
+```{r p3a, echo=FALSE}
+data <- data.frame((1:21)/2-.5,c(1.15,1.85,1.95,1.9,1.3,.1,-.5,-1.45,-1.95,-2.1,-1.4,-.35,.35,1.4,1.85,2.05,1.7,.75,-.2,-1.05,-1.6))
+names(data) <- c("t","y")
+data
+ggplot(data)+
+  geom_point(aes(x=t,y=y), color="#2D4790")+
+  labs(x="Time",y="Measurement")+
+  theme_minimal()
+```
+
+```{r p3b}
+results <- data.matrix(data.frame(1,1,1))
+names(results) <- c("A","omega","phi")
+jacobian <- function(x){
+  a <- -sin(x[2]*data["t"]+x[3])
+  b <- -x[1]*data["t"]*cos(x[2]*data["t"]+x[3])
+  c <- -x[1]*cos(x[2]*data["t"]+x[3])
+  data.matrix(data.frame(a,b,c))
+}
+
+normdiff = 1
+i = 1
+while (normdiff > 10^(-50)){
+  r <- data.matrix(data.frame(data["y"]-results[i,1]*sin(results[i,2]*data["t"]+results[i,3])))
+  results <- rbind(results, t(data.matrix(results[i,])-solve(t(jacobian(results[i,])) %*% jacobian(results[i,])) %*% t(jacobian(results[i,])) %*% r))
+  normdiff <- norm(results[i+1],type="2")-norm(results[i],type="2")
+  i <- i+1
+}
+
+estimation <- data.frame((1:2001)/200-.005)
+names(estimation) <- "t"
+estimation["b"] <- results[7,1]*sin(results[7,2]*estimation["t"]+results[7,3])
+
+results[7,]
+ggplot()+
+  geom_point(data=data, aes(x=t,y=y), color="#2D4790")+
+  geom_line(data=estimation, aes(x=t,y=b), color="#2D904E")+
+  labs(title="Gauss-Newton Estimation",x="Time",y="Measurement")+
+  theme_minimal()
+
+```
+
+

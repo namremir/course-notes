@@ -1,0 +1,227 @@
+---
+title: "RIMERMAN_HW8"
+author: "Mitch Rimerman"
+date: "2022-11-01"
+output: pdf_document
+---
+
+```{r setup, include=FALSE, results=FALSE, message=FALSE, warning=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(viridis)
+```
+
+## Problem 1
+
+\[
+f(x)=-x_1^2-4x_2^2, \quad \tilde{x}=[2,0]^T, \quad \bar{x}=[\sqrt{3},1/2]^T
+\]
+\[
+\nabla f(x)=[-2x_1,-8x_2] \quad\Rightarrow\quad \nabla f(\tilde{x})=[-4,0],f(\bar{x})=[-2\sqrt{3},-4] 
+\]
+The level set is 
+\[
+S=\{x \in\mathbb{R}^2:-x_1^2-4x_2^2=-4 \}
+\]
+and its parameterization is
+\[
+\gamma=\{x(t)=[2\sqrt{1-t^2},t]^T:t\in(-1,1)  \}\subset S
+\]
+Thus, the curve passes through $\tilde{x}$ at $\tilde{t}=0$ and through $\bar{x}$ at $\tilde{t}=1/2$.
+\[
+x'(t)=\left[-\frac{2t}{\sqrt{1-t^2}},1\right]^T,\quad x'({\tilde{t}})=[0,1]^T,\quad x'({\tilde{t}})=\left[\frac{-2}{\sqrt{3}},1\right]^t
+\]
+\[
+\nabla f(\tilde{x})^Tx'(\tilde{t}) = [-4,0][0,1]^T = 0 = [-2\sqrt{3},-4]\left[\frac{-2}{\sqrt{3}},1\right]^T = \nabla f(\bar{x})^Tx'(\bar{t})
+\]
+
+
+## Problem 2
+### a
+
+![2.1](hw8_p2a.png){width=30%}
+
+The solutions to the system are (0,1) and (1,0)
+
+### b
+
+\[
+(x-1)^2+(y-1)^2-1=0, \quad x+y-1=0
+\]
+\[
+x=1-y \quad\text{(plugging into equation 1)}\quad 2y^2-2y=0 \quad\Rightarrow\quad y(y-1)=0
+\]
+
+Plugging back into equation 2, $y=1\Rightarrow x=0$ and $y=0\Rightarrow x=1$.
+Thus, the solutions are (1,0) and (0,1)
+
+### c
+
+\[
+J_F(x,y)=\begin{bmatrix}
+\partial_xf_1 & \partial_yf_1 \\
+\partial_xf_2 & \partial_yf_2 \\
+\end{bmatrix}=\begin{bmatrix}
+2x-2 & 2y-2 \\
+1 & 1
+\end{bmatrix}
+\]
+\[
+J_F^{-1}=\frac{1}{2(x-y)}\begin{bmatrix}
+1 & -2y+2 \\
+-1 & 2x-2
+\end{bmatrix}
+\]
+
+At $(x_0,y_0)$, $2(x-y)=0$. Thus we have to add some noise to $J_F$. Set $J_F=J_F+.1I_{2\times2}$
+
+\[
+J_F(x,y)=\begin{bmatrix}
+\partial_xf_1 & \partial_yf_1 \\
+\partial_xf_2 & \partial_yf_2 \\
+\end{bmatrix}=\begin{bmatrix}
+2x-1.9 & 2y-2 \\
+1 & 1.1
+\end{bmatrix}
+\]
+\[
+J_F^{-1}=\frac{1}{2.2x-2y-0.09}\begin{bmatrix}
+1.1 & -2y+2 \\
+-1 & 2x-1.9
+\end{bmatrix}
+\]
+
+
+\[
+\begin{bmatrix}
+x_{k+1}\\
+y_{k+1}
+\end{bmatrix}=\begin{bmatrix}
+x_{k}\\
+y_{k}
+\end{bmatrix}-\frac{1}{2.2x_k-2y_k-0.09}\begin{bmatrix}
+1.1 & -2y_k+2 \\
+-1 & 2x_k-1.9
+\end{bmatrix}\begin{bmatrix}
+(x_k-1)^2+(y_k-1)^2-1 \\
+x_k+y_k-1
+\end{bmatrix}
+\]
+
+Iteration 1:
+Using the slightly modified Jacobian,
+\[
+\begin{bmatrix}
+x_{1}\\
+y_{1}
+\end{bmatrix}=\begin{bmatrix}
+1/2\\
+1/2
+\end{bmatrix}-\frac{1}{.01}\begin{bmatrix}
+1.1 & 1 \\
+-1 & -.9
+\end{bmatrix}\begin{bmatrix}
+-1/2 \\
+0
+\end{bmatrix}=\begin{bmatrix}
+1/2\\
+1/2
+\end{bmatrix}-\begin{bmatrix}
+-55\\
+50
+\end{bmatrix}=\begin{bmatrix}
+55.5\\
+-49.5
+\end{bmatrix}
+\]
+
+Iteration 2:
+Now we can use the actual Jacobian.
+
+\[
+\begin{bmatrix}
+x_{k+1}\\
+y_{k+1}
+\end{bmatrix}=\begin{bmatrix}
+x_{k}\\
+y_{k}
+\end{bmatrix}-\frac{1}{2(x_k-y_k)}\begin{bmatrix}
+1 & -2y_k+2 \\
+-1 & 2x_k-2
+\end{bmatrix}\begin{bmatrix}
+(x_k-1)^2+(y_k-1)^2-1 \\
+x_k+y_k-1
+\end{bmatrix}
+\]
+
+\[
+\begin{bmatrix}
+x_{2}\\
+y_{2}
+\end{bmatrix}=\begin{bmatrix}
+55.5\\
+-49.5
+\end{bmatrix}-\frac{1}{210}\begin{bmatrix}
+1 & 101 \\
+-1 & 109
+\end{bmatrix}\begin{bmatrix}
+5519.5 \\
+5
+\end{bmatrix}=\begin{bmatrix}
+55.5\\
+-49.5
+\end{bmatrix}-\begin{bmatrix}
+28.68809\\
+-23.68809
+\end{bmatrix}=\begin{bmatrix}
+26.81191\\
+-25.81191
+\end{bmatrix}
+\]
+
+![2.2.3](hw8_p2b.png){width=40%}
+
+Here, the initial point is green, $(x_1,y_1)$ is red and $(x_2,y_2)$ is blue.
+
+### d
+
+```{r p2d}
+x_vec <- 1:31
+y_vec <- 1:31
+x_df <- data.frame(x_vec,y_vec)
+x_df[1,] <- c(.5,.5)
+matrix(c(x_df[1,1],x_df[1,2],x_df[2,1],x_df[2,2]), nrow=2)
+
+
+for (i in 1:30){
+  if (x_df[i,1]-x_df[i,2] == 0){
+    J <- matrix(c(2*x_df[i,1]-2,1,2*x_df[i,2]-2,1), nrow=2)+ matrix(c(.1,0,0,.1),nrow=2)
+    J_inv = solve(J)
+    last_d = matrix(c((x_df[i,1]-1)^2+(x_df[i,2]-1)^2-1,x_df[i,1]+x_df[i,2]-1),nrow=2)
+    m <- J_inv %*% last_d
+    x_df[i+1,1] <- x_df[i,1]-m[1]
+    x_df[i+1,2] <- x_df[i,2]-m[2]
+  }
+  else {
+    J <- matrix(c(2*x_df[i,1]-2,1,2*x_df[i,2]-2,1), nrow=2)
+    J_inv = solve(J)
+    last_d = matrix(c((x_df[i,1]-1)^2+(x_df[i,2]-1)^2-1,x_df[i,1]+x_df[i,2]-1),nrow=2)
+    m <- J_inv %*% last_d
+    x_df[i+1,1] <- x_df[i,1]-m[1]
+    x_df[i+1,2] <- x_df[i,2]-m[2]
+  }
+}
+x_df
+```
+
+
+```{r p2d2}
+x_df$t <- 1:31
+ggplot(x_df)+
+  geom_point(aes(x=x_vec,y=y_vec,color=t), alpha=.5)+
+  scale_color_viridis(name="Iteration") +
+  labs(title="Newton's Method Iterations", x="x", y="y") +
+  theme_minimal()
+```
+
+Once the approximation gets close to 0, it approaches 0 very quickly, so after 8 iterations, all of the points seem to overlap, as they are very close to each other.

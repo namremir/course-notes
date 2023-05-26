@@ -1,0 +1,197 @@
+---
+title: "Lab 01"
+author: "Conrado Arroyo, Mitch Rimerman, Amalia Stahl, Andrew Yang"
+date: "10/8/2020"
+output: bookdown::html_document2
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Introduction {-#introduction}
+
+This report summarizes our findings on the potentially positive relationship between college majors and earnings upon graduation. The purpose of this report is to explore and document whether higher earnings upon graduation have an effect on major popularity, meaning would the promise of a higher salary upon graduation potentially influence prospective students to choose a certain major. The report is meant to inform prospective and current students and provide some insight into the potential myths or common perceptions about certain majors and salaries. 
+
+In the sections below, we created 5 graphs, each exploring the relationship between major popularity, employment, and earnings. The different graphics, each highlight different categories or different aspects of the data, giving a hopefully more complete picture of the potential relationship. We then gave descriptions of what we observed along with our own analysis of the data, while finally concluding with some remarks on the success of the project along with what insights we drew. 
+
+
+## Data {-#data}
+
+##### College majors and future earnings {-#college-majors-and-future-earnings}
+
+In 2014, the media organization FiveThirtyEight released an article along with supporting data exploring the connection between college majors and earnings upon graduation. The data set collected salary and employment information on 167 majors across the United States, along with measuring the popularity of each major, by listing the number of undergraduates studying the field. You can read the full article at FiveThirtyEight by clicking this link (https://fivethirtyeight.com/features/the-economic-guide-to-picking-a-college-major/) or if you want to look at the data further, you can access it on github (https://github.com/fivethirtyeight/data/tree/master/college-majors)
+
+
+## Data Manipulation {-#data-manipulation}
+
+We first installed the tidyverse (for graphical manipulation) and viridis (for specific colors) packages before importing our data.
+
+```{r library}
+library(tidyverse)
+library(viridis)
+```
+
+We then modified the data to create categorical variables out of both the median income and the total number of students for each major category.
+
+```{r data}
+college_all_ages <- read_csv("all-ages.csv")
+attach(college_all_ages)
+
+college_all_ages<-mutate(college_all_ages,major_income_cat=cut(Median,c(30000,50000,70000,90000,110000,130000),
+                                                               c("$30000 to $50000","$50000 to $70000",
+                                                                 "$70000 to $90000","$90000 to $110000",
+                                                                 "$110000 to $130000")))
+college_all_ages<-mutate(college_all_ages,total_students_cat=cut(Total,c(0,10000,100000,1000000,10000000),
+                                                               c("0 to 10,000","10,000 to 100,000",
+                                                                 "100,000 to 1,000,000",
+                                                                 "1,000,000 to 10,000,000")))
+
+var_one <- "major_income_cat"
+var_two <- "total_students_cat"
+```
+
+Finally, we created a summary table of our categorical variables for reference.
+
+```{r sum table} 
+summary_table <- summarize(group_by(college_all_ages, eval(as.name(var_one)), 
+                                    eval(as.name(var_two))),
+                           count=n())
+names(summary_table)[1:2] <- c(var_one, var_two)
+summary_table
+```
+
+
+## Graphs and Results {-#graphs-and-results}
+
+### Graphs {-#graphs}
+
+#### Conditional Bar Graph {-#conditional-bar-graph}
+
+```{r graph1, fig.cap="Conditional Bar Graph"}
+ggplot(college_all_ages)+
+  geom_bar(aes_string(x=var_one, fill=var_two),position="fill") +
+  labs(title=paste("Conditional Distribution of Total Students","\nDependent on Median Major Earnings"),
+       x="Earnings (In Thousands of $)", y="Proportion")+
+  scale_fill_viridis(discrete=T, name="Participation Level \nPer Major", labels=c("Low", "Moderate", "High", "Very High")) +
+  scale_x_discrete(labels=c("30 to 50","50 to 70", "70 to 90", "90 to 110", "110 to 130")) +
+  coord_flip() +
+  theme_classic()
+```
+
+#### Scatterplots {-#scatterplots}
+
+```{r graph2, fig.cap="Overall Scatterplot"}
+ggplot(college_all_ages) +
+  geom_point(aes(x=Median,y=Total, color=Major_category, fill=Major_category, shape=Major_category)) +
+  labs(title="Major Participation in Relation to Median Earnings", x="Median Earnings", 
+       y="Total Number of Students") +
+  scale_y_log10(labels=c("1,000", "10,000", "100,000", "1,000,000", "10,000,000")) +
+  scale_color_viridis(discrete=T, name="Major Category")+
+  scale_fill_viridis(discrete=T, name="Major Category")+
+  scale_shape_manual(name="Major Category", values=c(0,1,2,3,4,5,6,7,8,9,10,11,12,14,15,16))+
+  theme_classic()
+```
+
+##### Super Category Creation {-#super-category-creation}
+
+```{r subsets}
+stem <- c("Computers & Mathematics", "Engineering", "Physical Sciences", "Biology & Life Science", "Health", "Agriculture & Natural Resources")
+social_sciences <- c("Social Science","Psychology & Social Work", "Law & Public Policy", "Education")
+business <- c("Business", "Industrial Arts & Consumer Services")
+humanities <- c("Humanities & Liberal Arts", "Arts", "Communications & Journalism", "Interdisciplinary")
+
+college_all_ages <- mutate(college_all_ages, super_category=ifelse(Major_category %in% stem, "STEM",
+                                                 ifelse(Major_category %in% social_sciences, "Social Sciences",
+                                                        ifelse(Major_category %in% business, "Business",
+                                                               ifelse(Major_category %in% humanities, "Humanities","NA")))))
+```
+
+
+```{r subsetgraphs, fig.width = 10, fig.cap="Scatterplots by Super Major Category"}
+ggplot(college_all_ages) +
+  geom_point(aes(x=Median,y=Total, color=Major_category, fill=Major_category, shape=Major_category)) +
+  facet_grid(. ~ super_category) +
+  labs(title="Major Participation in Relation to Median Earnings", x="Median Earnings", 
+       y="Total Number of Students") +
+  scale_y_log10(labels=c("1,000", "10,000", "100,000", "1,000,000", "10,000,000")) +
+  scale_color_viridis(discrete=T, name="Major Category")+
+  scale_fill_viridis(discrete=T, name="Major Category")+
+  scale_shape_manual(name="Major Category", values=c(0,1,2,3,4,5,6,7,8,9,10,11,12,14,15,16))+
+  theme_classic()
+```
+
+#### Boxplots {-#boxplots}
+
+```{r graph3, fig.cap="Boxplots"}
+ggplot(college_all_ages) +
+  geom_boxplot(aes(x=Major_category, y=Median, fill=Major_category, color=Major_category)) +
+  labs(title="Distribution of Median Earnings per Major Category", x="Major Category", y="Median Earnings") +
+  scale_fill_viridis(discrete=T, name="Major Category", alpha=.25) +
+  scale_color_viridis(discrete=T, name="Major Category") +
+  theme_classic() +
+  theme(axis.text.x=element_blank(),
+        axis.ticks.x=element_blank())
+```
+
+#### Violin Plot {-#violin-plot}
+
+```{r graph4, fig.cap="Violin Plot"}
+college_all_ages$Major_category <- as.factor(college_all_ages$Major_category)
+ggplot(college_all_ages, aes(x=Major_category, y=Unemployment_rate, fill=Major_category)) +
+  geom_violin(trim=TRUE) +
+  labs(title="Distribution of Unemployment Rates Among Major Categories",y="Unemployment Rate",
+       x="Major Category") +
+  scale_fill_viridis(discrete=T, name="Major Category") +
+  theme_classic() +
+  theme(axis.text.x=element_blank(),axis.ticks.x=element_blank())
+```
+
+#### Major Category Table {-#major-category-table}
+
+```{r data2}
+college_major_cat <- summarize(group_by(college_all_ages, Major_category), 
+                               totalEmployed=sum(Employed),
+                               totalUnemployed=sum(Unemployed))
+college_major_cat <- mutate(college_major_cat, UnemploymentRate=totalUnemployed/(totalEmployed+totalUnemployed))
+college_major_cat
+```
+
+#### Coxcomb {-#coxcomb}
+
+```{r graph5, fig.cap="Coxcomb"}
+ggplot(college_major_cat) +
+  geom_bar(stat="identity", aes(x=Major_category, fill=Major_category, 
+                                color=Major_category, y=UnemploymentRate), width=1) +
+  labs(title="Unemployment Rate per Major Category", y="Unemployment Rate", x=element_blank()) +
+  scale_fill_viridis(discrete=T, name="Major Category", alpha=.9) +
+  scale_color_viridis(discrete=T, name="Major Category") +
+  coord_polar() +
+  scale_y_sqrt() +
+  theme_classic() +
+  theme(axis.text.x=element_blank())
+```
+
+### Results {-#results}
+
+Figure \@ref(fig:graph1): The first display is a conditional bar plot which depicts the proportion of total students dependent in an earnings bracket based on median major income. The x-axis represents proportion while the y axis represents earnings. The data and subsequent graph showed that lightly-populated majors tended to appear in higher earning brackets, while heavily-populated majors tended to have lower earning brackets. 
+
+Figure \@ref(fig:graph2): This visualisation is a scatter plot which depicts major participation in relation to  median earnings. The major categories are mapped to the color aesthetic while also each possessing their own symbol in order to help distinguish them further. The x-axis represents the median earnings while the total number of students is the y-axis. Although there is a weak association between major participation and median income, there does appear to be a slight relationship between major category and median income. Specifically, it looks like the categories “Engineering,” “Health,” and “Computers and Mathematics” tend to have higher median incomes than others.
+
+Figure \@ref(fig:subsetgraphs): This visualisation is a scatter plot which depicts major participation, but this time majors are grouped into far larger categories in relation to median earnings. This allows us to view a slightly simplified version of figure 2.a, by breaking down the majors into the categories of Business, Humanities, Social science, Stem. From the data, we can gleam that STEM majors tend to have higher earnings upon graduation. 
+
+Figure \@ref(fig:graph3): The box plot shows the distribution of median earnings per the 13 major categories. Along the x-axis are the major categories, while along the y-axis the median earnings in dollars are displayed, with major categories linked to color aesthetic. Among them, Engineering possesses the highest median earnings. Additionally, both Engineering and Industrial Arts & Consumer Services have the largest interquartile spreads. Meanwhile, the categories with the lowest median earnings are Education and Interdisciplinary.
+
+Figure \@ref(fig:graph4): This visualization is a violin graph displaying the distribution of unemployment rates among major categories, where each violin represents a major category. The width of each violin represents the amount of majors within a particular category that have a specific rate of unemployment, which is measured on the y axis. Each major category is mapped to the color of its respective violin. The highest unemployment rate seen in the graph belongs to the Arts major category, and the two categories with the highest spread of unemployment rates are Arts and Education (Arts has rates between ~0.05 - 0.16; Education has rates between ~0 - 0.10). The lowest levels of unemployment achieved by any major category are found in Education and Engineering.
+ 
+Figure \@ref(fig:graph5): The coxcomb plot compares the unemployment rates of people across the major categories. The radial shape of the graph allows for a different representation of an unemployment in a specific major category. The purpose of this visualization is to help see if there is any sort of relationship between major categories and unemployment that might affect our previous interpretations, which were mostly focused on median income. 
+
+## Conclusions {-#conclusions}
+
+After completing this work, our group has concluded that the relationship we hypothesized in the beginning of the project is actually much weaker than we thought. There is not a strong positive association between median earnings per major and major popularity, however we did find that there is a fairly strong relationship between major category and median earnings per major.
+    
+In terms of answering our question of interest, although we were able to conclude that the relationship is weak, we also felt that there was not enough data in our data set to make a stronger claim. We still believe that there could be a stronger relationship between median earnings per major and major popularity, but we would need much more information to be sure. So even though our displays were successful at clearly expressing the relationships between variables, it’s likely that our question of interest restricted our focus to only see weak relationships.
+    
+There are several improvements we could make to improve the quality of our work going forward. For example, working with a larger data set would be vital to examining the strength of the relationship between major popularity. Additionally, we believe that other variables may present a confounding effect on our analysis, requiring us to isolate our variables. For example, it may be that unemployment rates for each major category also affect major popularity as well as median earnings.
+    
+Going forward, we could explore new avenues for approaching our question--through careful consideration of other variables within the dataset as well as expanding our available data--to see if the weak relationship between median earnings and major popularity holds.

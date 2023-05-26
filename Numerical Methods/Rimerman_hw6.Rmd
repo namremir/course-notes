@@ -1,0 +1,119 @@
+---
+title: "Rimerman-HW6"
+author: "Mitch Rimerman"
+date: "2022-10-18"
+output: pdf_document
+---
+
+```{r setup, include=FALSE, results=FALSE, message=FALSE, warning=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(tidygraph)
+library(viridis)
+library(ggraph)
+```
+
+## Problem 1
+
+
+Apply a fixed point method to find a root of $\cos x= \sin x$ on $[0,\frac{\pi}{2}]$, by converting the equation into a fixed point equation
+\[
+x = g(x)=x+\cos x -\sin x
+\]
+given $x_0=0$.  Note that $\cos \frac{\pi}{4}=\sin \frac{\pi}{4}$, so $x^*:=\frac{\pi}{4}\approx 0.7853982$. 
+
+```{r p1a}
+n <- c(1,10,20,30)
+table <- matrix(0,4,4)
+for (i in 1:4){
+  m <- n[i]
+  x_star <- pi/4
+  x <- 0
+  for (j in 1:m){
+    x_prev <- x
+    x <- x_prev + cos(x_prev) - sin(x_prev)
+  }
+  g_x <- x + cos(x) - sin(x)
+  e_k <- abs(x-x_star)
+  e_k1 <- abs(x_prev-x_star)
+  q <- (e_k)/(e_k1)
+  table[i,] <- c(x,(g_x),(e_k),q)
+}
+table
+```
+
+Fill out the
+following table
+\begin{center}
+\begin{tabular}{|c|c|c|c|c|}
+ \hline
+$k$  & $x_k$& $g(x_k)$& $e_k = |x_k-x^*|$& $e_k/e_{k-1}$         \\ \hline
+$1$& 1 & 0.6988313 & $2.146018*10^{-1}$ & 0.2732395 \\ \hline
+$10$& 0.7853235 & 0.7854291 & $7.462951*10^{-5}$ & 0.4142136\\ \hline
+$20$& 0.7853982 & 0.7853982 & $1.109568*10^{-8}$ & 0.4142136\\ \hline
+$30$& 0.7853982 & 0.7853982 & $1.649569*10^{-12}$ & 0.4141718\\ \hline
+\end{tabular}
+\end{center}
+
+\newpage
+## Problem 2
+
+Let $f(x)=x^6-x-1$.
+
+### a
+Use $4$ iterations of the Newton's method with $x_0=2$ to get an approximate 
+root for this equation.
+
+$f(x)=x^6-x-1 \quad \Rightarrow \quad f'(x) = 6x^5-1$
+Thus, we use
+\[
+x_{k+1}=x_k - \frac{f(x_k)}{f'(x_k)} = x_k-\frac{x_k^6-x_k-1}{6x_k^5-1}
+\]
+$x_0=2$
+\begin{enumerate}
+\item $x_1=x_0-\frac{x_0^6-x_0-1}{6x_0^5-1}=2-\frac{2^6-3}{6(2^5)-1}=2-\frac{61}{191}=1.680628$
+\item $x_2=x_1-\frac{x_1^6-x_1-1}{6x_1^5-1}=1.680628-\frac{1.680628^6-2.680628}{6(1.680628^5)-1}=1.430739$
+\item $x_3=x_2-\frac{x_2^6-x_2-1}{6x_2^5-1}=1.430739-\frac{1.430739^6-2.430739}{6(1.430739^5)-1}=1.254971$
+\item $x_4=x_3-\frac{x_3^6-x_3-1}{6x_3^5-1}=1.254971-\frac{1.254971^6-2.254971}{6(1.254971^5)-1}=1.161538$
+\end{enumerate}
+
+
+### b
+Use $4$ iterations of the Secant method with $x_0=2$ and $x_1=1$ to get an 
+approximate root for this equation.
+
+\[
+x_{k+1}=\frac{x_{k-1}f(x_k)-x_kf(x_{k-1})}{f(x_k)-f(x_{k-1})}=\frac{x_{k-1}(x_k^6-x_k-1)-x_k(x_{k-1}^6-x_{k-1}-1)}{x_k^6-x_k-x_{k-1}^6+x_{k-1}}
+\]
+$x_0=2$, $x_1=1$
+\begin{enumerate}
+\item $x_2=\frac{x_{0}(x_1^6-x_1-1)-x_1(x_{0}^6-x_{0}-1)}{x_1^6-x_1-x_{0}^6+x_{0}}=\frac{2(1^6-1-1)-(2^6-2-1)}{1^6-1-2^6+2}=1.016129$
+\item $x_3=\frac{x_{1}(x_2^6-x_2-1)-x_2(x_{1}^6-x_{1}-1)}{x_2^6-x_2-x_{1}^6+x_{1}}=1.190578$
+\item $x_4=\frac{x_{2}(x_3^6-x_3-1)-x_3(x_{2}^6-x_{2}-1)}{x_3^6-x_3-x_{2}^6+x_{2}}=1.117656$
+\item $x_5=\frac{x_{3}(x_4^6-x_4-1)-x_4(x_{3}^6-x_{3}-1)}{x_4^6-x_4-x_{3}^6+x_{3}}=1.132532$
+\end{enumerate}
+
+### c
+Compare the results in (a) and (b).
+
+The results from the secant method are closer to the true root of the function, most likely because there were two starting guesses, so the fourth iteration is $x_5$ instead of $x_4$.
+
+\newpage
+## Problem 3
+Consider the equation $e^{100x} (x-2)=0$. Apply Newton's method several times with $x_0=1$.
+What do you observe?
+
+$f'(x)=100e^{100x}(x-2)+e^{100x}=e^{100x}(100x-199)$
+Thus we use
+\[
+x_{k+1}=x_k - \frac{f(x_k)}{f'(x_k)} = x_k - \frac{e^{100x_k} (x_k-2)}{e^{100x_k}(100x_k-199)}=x_k-\frac{x_k-2}{100x_k-199}
+\]
+
+$x_0=1$
+\begin{enumerate}
+\item $x_1=x_0-\frac{x_0-2}{100x_0-199}=1-\frac{-1}{-99}=.989899$
+\item $x_2=x_1-\frac{x_1-2}{100x_1-199}=.989899-\frac{-1.010101}{-100.010101}=.979799$
+\item $x_3=x_2-\frac{x_2-2}{100x_2-199}=.979799-\frac{-1.020201}{-101.020100}=.969700$
+\end{enumerate}
+
+We know that the root of the equation $e^{100x} (x-2)$ is $x=2$. However, with a starting $x_0=1$, the initial guess is poorly chosen, as the Newton's method approximation is decreasing, extremely slowly, from 1, and is not approaching 2. This is an example of Newton's method not converging to the root, due to a poor choice of $x_0$.

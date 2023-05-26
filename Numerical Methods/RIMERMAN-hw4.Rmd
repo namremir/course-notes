@@ -1,0 +1,35 @@
+---
+
+title: "RIMERMAN hw4"
+author: "Mitch Rimerman"
+date: "2022-10-04"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Problem 1
+Download the datafile ```economic_data.txt```. See the datafile for details regarding the column
+values and meaning, note that the datafile has six covariates $(A1, A2, . . . , A6)$. Consider the
+multiple linear model, and find the best fit for this model
+
+
+```{r data}
+economic_data <- read.csv("economic_data.txt", sep="")
+y <- data.matrix(economic_data$Y, rownames.force = NA)
+X <- data.matrix(economic_data[2:7], rownames.force = NA)
+A <- cbind(rep(1, times=16), X)
+ATA <- t(A) %*% A
+ATA_inv <- solve(ATA, tol=1e-21)
+Beta <- ATA_inv %*% t(A) %*% y
+rownames(Beta) <- c("B0","B1","B2","B3","B4","B5","B6")
+Beta
+```
+
+Thus, 
+\begin{align*}
+E[x_1,x_2,\cdots,x_{16}] &= \beta_0^* + \beta_1^* x_1 + \beta_2^* x_2 + \beta_3^* x_3 +\beta_4^* x_4 + \beta_5^* x_5 +\beta_6^* x_6 \\
+&= -3475441 + 14.78949 x_1 -0.03574762 x_2 -2.020195 x_3 -1.032766 x_4 -0.04911940 x_5 + 1825.544 x_6 
+\end{align*}

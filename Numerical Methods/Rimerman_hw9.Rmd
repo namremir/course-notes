@@ -1,0 +1,189 @@
+---
+title: "RIMERMAN_HW9"
+author: "Mitch Rimerman"
+date: "2022-11-08"
+output: pdf_document
+---
+
+```{r setup, include=FALSE, results=FALSE, message=FALSE, warning=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(viridis)
+```
+
+## Problem 1
+### a
+
+\[
+f(x_1,x_2)=100(x_2 -x_1^2)^2 + (1-x_1)^2
+\]
+\[
+\nabla f(x_1,x_2)=\begin{bmatrix}
+400x_1^3-400x_1x_2+2x_1-2 \\
+200x_2-200x_1^2
+\end{bmatrix}=\begin{bmatrix}
+0\\
+0
+\end{bmatrix}
+\]
+Thus,
+\[
+x_2=x_1^2 \quad\Rightarrow\quad 0=400x_1^3-400x_1^3+2x_1-2=2x_1-2  \quad\Rightarrow\quad x_1=x_2=1
+\]
+\[
+\nabla^2f(x_1,x_2)=\begin{bmatrix}
+1200x_1^2-400x_2+2 & -400x_1 \\
+-400x_1 &  200
+\end{bmatrix}\quad\Rightarrow\quad\nabla^2f(1,1)=\begin{bmatrix}
+802 & -400 \\
+-400 & 200
+\end{bmatrix}
+\]
+The matrix $\nabla^2f(1,1)$ has eigenvalues $\lambda=501\pm\sqrt{250601}$, which are both positive. Thus $\nabla^2f(1,1)$ is positive definite, so (1,1) is a local minimum, and the only local minimum or extreme point of $f(x_1,x_2)$.
+\[
+\lVert x\rVert\rightarrow\infty \quad\Rightarrow\quad x_1\rightarrow\pm\infty \text{ or }x_2\rightarrow\pm\infty
+\]
+Since the expressions containing $x$ in $f(x)$ are all squares, 
+\[
+x_1\rightarrow\pm\infty \text{ or }x_2\rightarrow\pm\infty \quad\Rightarrow\quad f(x)\rightarrow\infty 
+\]
+Thus, the function increases at its limits, so the single local minimum at (1,1) is a global minimum.
+
+
+Now we know $x^*=(1,1)$ is a global minimizer of $f(x_1,x_2)$.
+Suppose there exists $\tilde{x}=(\tilde{x}_1,\tilde{x}_2)$ that is a different global minimizer of $f$. 
+$f(1,1)=100(1 -1)^2 + (1-1)^2=0$, so set $f(\tilde{x})=0=100(\tilde{x}_2 -\tilde{x}_1^2)^2 + (1-\tilde{x}_1)^2$. 
+Since both terms on the RHS is always non-negative, $1-\tilde{x}_1=0$, so $\tilde{x}_1=1$, and $\tilde{x}_2 -\tilde{x}_1^2=0$, so $\tilde{x}_2-1=0$, hence $\tilde{x}_2=1$. 
+Thus, $x^*=\tilde{x}$, a contradiction, so $x^*$ is the unique global minimizer of $f$.
+
+
+
+### b
+
+```{r p1b1}
+func  <- function(x){
+  100*(x[2] -x[1]^2)^2 + (1-x[1])^2
+}
+gradient <- function(x){
+  c(400*x[1]^3-400*x[1]*x[2]+2*x[1]-2,200*x[2]-200*x[1]^2)
+}
+
+GradDecent <- function(f, grad, x0, alpha){
+  x <- t(matrix(x0))
+  gradnorm <- norm(grad(x0), type="2")
+  gradnorm_k <- gradnorm
+  k=1
+  while (gradnorm_k >= gradnorm*10^(-4) && gradnorm_k<10^100){
+    x <- rbind(x,x[k,]-alpha*(grad(x[k,])))
+    gradnorm_k <- norm(grad(x[k+1,]), type="2")
+    k <- k+1
+  }
+  x
+}
+
+xsol <- GradDecent(func, gradient, c(0,0), .001)
+xsol2 <- GradDecent(func, gradient, c(0,0), .05)
+xsol3 <- GradDecent(func, gradient, c(0,0), .5)
+
+xsol <- data.frame(xsol)
+xsol2 <- data.frame(xsol2)
+xsol3 <- data.frame(xsol3)
+xsol["t"] <- 1:18043
+xsol2["t"] <- 1:8
+xsol3["t"] <- 1:6
+xsol["diff"] <- sqrt((xsol$X1-1)^2+(xsol$X2-1)^2)
+xsol2["diff"] <- sqrt((xsol2$X1-1)^2+(xsol2$X2-1)^2)
+xsol3["diff"] <- sqrt((xsol3$X1-1)^2+(xsol3$X2-1)^2)
+```
+
+For this code to work properly, I had to add the additional condition that $\lVert\nabla f(x^k)\rVert<10^100$ because when it diverges, the numbers become incomputable by the computer. For $\alpha=.05$ and $\alpha=.5$, $\lVert\nabla f(x^k)\rVert$ diverges, so the gradient descent stops working.
+
+```{r p1b2}
+ggplot(xsol) +
+  geom_point(aes(y=diff,x=t, color=t)) +
+  scale_color_viridis() +
+  labs(title="Normed Difference per Iteration for alpha=.001",
+       x="Iteration",y="Normed Difference",color="Iteration") +
+  theme_minimal()
+
+ggplot(xsol2) +
+  geom_point(aes(y=diff,x=t, color=t)) +
+  scale_color_viridis() +
+  scale_y_continuous(trans='log2') +
+  labs(title="Normed Difference per Iteration for alpha=.05",
+       x="Iteration",y="Normed Difference",color="Iteration") +
+  theme_minimal()
+
+ggplot(xsol3) +
+  geom_point(aes(y=diff,x=t, color=t)) +
+  scale_color_viridis() +
+  scale_y_continuous(trans='log2') +
+  labs(title="Normed Difference per Iteration for alpha=.5",
+       x="Iteration",y="Normed Difference",color="Iteration") +
+  theme_minimal()
+```
+
+For $\alpha=.001$, we have slow convergence, with 18,043 iterations, but eventually the Gradient Descent method does reach approximately (1,1). For $\alpha=.05$ and $\alpha=.5$, the values for $\lVert\nabla f(x^k)\rVert$ diverge, as the gradient descent approaches the incorrect direction, so the gradient descent doesn't work. 
+
+### c
+
+```{r p1c1}
+GradDecentNesterov <- function(f, grad, x0, alpha){
+  x <- t(matrix(x0))
+  y <- t(matrix(x0))
+  d <- 1
+  gradnorm <- norm(grad(x0), type="2")
+  gradnorm_k <- gradnorm
+  k=1
+  while (gradnorm_k >= gradnorm*10^(-4) && gradnorm_k<10^100){
+    x <- rbind(x,y[k,]-alpha*(grad(y[k,])))
+    gradnorm_k <- norm(grad(x[k+1,]), type="2")
+    dold <- d
+    d <- (1+sqrt(1+4*dold^2))/2
+    y <- rbind(y,x[k+1,]+((dold-1)/d)*(x[k+1,]-x[k,]))
+    k <- k+1
+  }
+  x
+}
+
+nxsol <- GradDecentNesterov(func, gradient, c(0,0), .001)
+nxsol2 <- GradDecentNesterov(func, gradient, c(0,0), .05)
+nxsol3 <- GradDecentNesterov(func, gradient, c(0,0), .5)
+
+nxsol <- data.frame(nxsol)
+nxsol2 <- data.frame(nxsol2)
+nxsol3 <- data.frame(nxsol3)
+nxsol["t"] <- 1:317
+nxsol2["t"] <- 1:8
+nxsol3["t"] <- 1:6
+nxsol["diff"] <- sqrt((nxsol$X1-1)^2+(nxsol$X2-1)^2)
+nxsol2["diff"] <- sqrt((nxsol2$X1-1)^2+(nxsol2$X2-1)^2)
+nxsol3["diff"] <- sqrt((nxsol3$X1-1)^2+(nxsol3$X2-1)^2)
+```
+
+```{r p1c2}
+ggplot(nxsol) +
+  geom_point(aes(y=diff,x=t, color=t)) +
+  scale_color_viridis() +
+  labs(title="Normed Difference per Iteration for alpha=.001",
+       x="Iteration",y="Normed Difference",color="Iteration") +
+  theme_minimal()
+
+ggplot(nxsol2) +
+  geom_point(aes(y=diff,x=t, color=t)) +
+  scale_color_viridis() +
+  scale_y_continuous(trans='log2') +
+  labs(title="Normed Difference per Iteration for alpha=.05",
+       x="Iteration",y="Normed Difference",color="Iteration") +
+  theme_minimal()
+
+ggplot(nxsol3) +
+  geom_point(aes(y=diff,x=t, color=t)) +
+  scale_color_viridis() +
+  scale_y_continuous(trans='log2') +
+  labs(title="Normed Difference per Iteration for alpha=.5",
+       x="Iteration",y="Normed Difference",color="Iteration") +
+  theme_minimal()
+```
+
+Just like for standard gradient descent, $\alpha=.001$, we have convergence, much faster than standard gradient descent with only 317 iterations, and quickly reaches approximately (1,1). For $\alpha=.05$ and $\alpha=.5$, the values for $\lVert\nabla f(x^k)\rVert$ diverge, as the Nesterov gradient descent also approaches the incorrect direction, so the Nesterov gradient descent doesn't work. 

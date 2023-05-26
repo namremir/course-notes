@@ -1,0 +1,253 @@
+---
+title: "Rimerman-HW5"
+author: "Mitch Rimerman"
+date: "2022-10-11"
+output: pdf_document
+---
+
+```{r setup, include=FALSE, results=FALSE, message=FALSE, warning=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(tidygraph)
+library(viridis)
+library(ggraph)
+```
+
+## Problem 1
+
+```{r p1, include=FALSE}
+x = runif(5, -10,10)
+x = c(7.098,0.934,1.529,-7.631,4.812)
+x = matrix(x)
+A = 1/sapply(1:5,function(x) x:(x+5-1))
+b = A %*% x
+bhat = c(7.314042,3.573133,2.201482,1.997953,1.620487)
+Ainv = solve(A)
+xhat = Ainv %*% bhat
+```
+
+
+Create a $5 \times 5$ Hilbert matrix $A$. Generate a random vector $x$, and compute $b = Ax$. Add a tiny amount of noise to $b$, call it $\hat{b}$. Then recover $\hat{x}$ from $A\hat{x} = \hat{b}$.
+
+\[
+A=\begin{bmatrix}
+1 & 1/2 & 1/3 & 1/4& 1/5 \\
+1/2 & 1/3 & 1/4 & 1/5 & 1/6 \\
+1/3 & 1/4 & 1/5 & 1/6 & 1/7 \\
+1/4 & 1/5 & 1/6 & 1/7 & 1/8 \\
+1/5 & 1/6 & 1/7 & 1/8 & 1/9 \\
+\end{bmatrix}, \quad x=\begin{bmatrix}
+7.098 \\
+0.934 \\
+1.529 \\
+-7.631 \\
+4.812
+\end{bmatrix}
+\]
+\[
+b = Ax = \begin{bmatrix}
+7.129317 \\
+3.518383 \\
+2.320895 \\
+1.727490 \\
+1.374487 
+\end{bmatrix}
+\]
+\[
+\hat{b}=\begin{bmatrix}
+7.314042 \\
+3.573133 \\
+2.201482 \\
+1.997953 \\
+1.620487
+\end{bmatrix}
+\]
+\[
+\hat{x}=A^{-1}\hat{b}=\begin{bmatrix}
+25 & -300 & 1050 & -1400 & 630 \\
+-300 & 4800 & -18900 & 26880 & -12600 \\
+1050 & -18900 & 79380 & -117600 & 56700 \\
+-1400 & 26880 & -117600 & 179200 & -88200 \\
+630 & -12600 & 56700 & -88200 & 44100 \\
+\end{bmatrix}\begin{bmatrix}
+7.314042 \\
+3.573133 \\
+2.201482 \\
+1.997953 \\
+1.620487
+\end{bmatrix} = \begin{bmatrix}
+-353.7599 \\
+6635.6521 \\
+- 28176.4679\\
+42018.0646 \\
+-20345.5613
+\end{bmatrix}
+\]
+
+How accurate is the recovered solution? Why did this happen? 
+
+In solving the system, $\hat{x}$ is not at all accurate in recovering $x$.
+
+```{r p1b}
+Heigen <- eigen(A)
+Heigen$values
+```
+
+
+If we examine the eigenvalues Hilbert matrix, $A$, $\lambda_1=1.567051$ and $\lambda_5=3.287929*10^{-06}$. Thus, \[
+\kappa(A)=\frac{|\lambda_1|}{|\lambda_n|}=\frac{1.567051}{3.287929*10^{-06}}=476607.3111676,
+\]
+which is extremely large, so the system is very sensitive to small changes.
+
+
+## Problem 2
+### a
+
+Find the dominant eigenvalue $\lambda^*_{max}$ and its corresponding eigenvector $v^*$.
+
+\[
+A = \begin{bmatrix}
+1 & 4 & 2\\
+4 & 7 & 3\\
+2 & 3 & 6
+\end{bmatrix}
+\]
+
+```{r p2a}
+A = matrix(data = c(1,4,2,4,7,3,2,3,6), nrow = 3, ncol = 3, byrow = FALSE,
+       dimnames = NULL)
+Aeigen <- eigen(A)
+Aeigen
+```
+
+The dominant eigenvalue is $\lambda^*_{max}=11.384393$ and its corresponding eigenvector is $v^*=\begin{bmatrix}-0.3899741\\-0.7351766\\-0.5544688\end{bmatrix}$. 
+
+### b
+Use the Power Method to find the (approximate) dominant eigenvector $v^{(k)}$ and eigenvalue $\mu_k$ of this matrix for different stopping criteria
+\[
+\frac{\lVert v^{(k)}-v^*\rVert_2}{\lVert v^*\rVert_2}<\epsilon
+\]
+
+```{r p2b1}
+i = 0
+k = 1
+x = matrix(c(-1,-1,-1))
+while (k > 10**(-3)) {
+  x_prev = x/norm(x, type="2")
+  x = A %*% x_prev
+  x_normed = x/norm(x, type="2")
+  k = norm(x_normed-Aeigen$vectors[,1], type="2")/norm(Aeigen$vectors[,1], type="2")
+  
+  i = i + 1
+}
+rw_k = norm(x_normed-(x_prev/norm(x_prev, type="2")), type="2")/
+        norm(x_prev/norm(x_prev, type="2"), type="2")
+mu = (t(x) %*% A %*% x)/(t(x) %*% x)
+```
+
+```{r p2b2}
+i = 0
+k = 1
+x = matrix(c(-1,-1,-1))
+while (k > 10**(-6)) {
+  x_prev = x/norm(x, type="2")
+  x = A %*% x_prev
+  x_normed = x/norm(x, type="2")
+  k = norm(x_normed-Aeigen$vectors[,1], type="2")/norm(Aeigen$vectors[,1], type="2")
+  
+  i = i + 1
+}
+rw_k = norm(x_normed-(x_prev/norm(x_prev, type="2")), type="2")/
+        norm(x_prev/norm(x_prev, type="2"), type="2")
+mu = (t(x) %*% A %*% x)/(t(x) %*% x)
+```
+
+
+```{r p2b3}
+i = 0
+k = 1
+x = matrix(c(-1,-1,-1))
+while (k > 10**(-9)) {
+  x_prev = x/norm(x, type="2")
+  x = A %*% x_prev
+  x_normed = x/norm(x, type="2")
+  k = norm(x_normed-Aeigen$vectors[,1], type="2")/norm(Aeigen$vectors[,1], type="2")
+  
+  i = i + 1
+}
+rw_k = norm(x_normed-(x_prev/norm(x_prev, type="2")), type="2")/
+        norm(x_prev/norm(x_prev, type="2"), type="2")
+mu = (t(x) %*% A %*% x)/(t(x) %*% x)
+```
+
+
+\begin{center}
+\begin{tabular}{ |c|c|c|c|c| } 
+ \hline
+ $\epsilon$ & iteration & $|\mu_k-\lambda^*_{max}|$ & $\frac{\lVert v^{(k)}-v^*\rVert_2}{\lVert v^*\rVert_2}$ & $\frac{\lVert v^{(k)}-v^{(k-1)}\rVert_2}{\lVert v^{(k-1)}\rVert_2}$ \\ 
+ \hline
+ $10^{-3}$ & $4$ & $4.471279*10^{-06}$ & $0.0007602396$ & $0.001622443$\\
+ \hline
+ $10^{-6}$ & $10$ & $5.274003*10^{-12}$ & $8.260104*10^{-07}$ & $1.75009*10^{-06}$ \\ 
+ \hline
+ $10^{-9}$ & $16$ & $1.776357*10^{-15}$ & $8.976815*10^{-10}$ & $1.901942*10^{-09}$ \\ 
+ \hline
+\end{tabular}
+\end{center}
+
+\newpage
+## Problem 3
+
+Build a connected network graph of 5 nodes, that is, a network with 5 pages.
+Determine the highest rated web page using the page rank approach discussed in the lecture.
+
+```{r p3q, echo=FALSE}
+set.seed(25)
+graph <- play_erdos_renyi(n = 5, p=.5) %>% 
+  activate(nodes) %>% 
+  mutate(class = sample(letters[1:5], n(), replace = FALSE)) %>% 
+  activate(edges) %>% 
+  arrange(.N()$class[from])
+ggraph(graph, layout = "stress") + 
+  geom_edge_link(
+    arrow = arrow(), 
+    start_cap = circle(5, "mm"),
+    end_cap = circle(5, "mm")
+  ) + 
+  geom_node_point(aes(color=class),size = 8)+
+  scale_color_viridis(discrete=T, name="Node")  +
+  theme_void()
+```
+
+Adjacency Matrix:
+\[
+A = \begin{bmatrix}
+0 & 1 & 1 & 0 & 0 \\
+1 & 0 & 1 & 1 & 0 \\
+0 & 1 & 0 & 0 & 1 \\
+1 & 1 & 0 & 0 & 0 \\
+1 & 0 & 1 & 0 & 0
+\end{bmatrix}
+\]
+
+Transition Probability Matrix:
+\[
+A = \begin{bmatrix}
+0 & 1/2 & 1/2 & 0 & 0 \\
+1/3 & 0 & 1/3 & 1/3 & 0 \\
+0 & 1/2 & 0 & 0 & 1/2 \\
+1/2 & 1/2 & 0 & 0 & 0 \\
+1/2 & 0 & 1/2 & 0 & 0
+\end{bmatrix}
+\]
+
+```{r p3b}
+AT = matrix(data = c(0,1/2,1/2,0,0,1/3,0,1/3,1/3,0,0,1/2,0,0,1/2,1/2,1/2,0,0,0,1/2,0,1/2,0,0),
+            nrow = 5, ncol = 5, byrow = FALSE,dimnames = NULL)
+ATeigen <- eigen(AT)
+ATeigen
+P = ATeigen$vectors[,1]/sum(ATeigen$vectors[,1])
+P
+```
+
+Thus, the highest ranked webpage would be page $b$, with a probability of .28846154.

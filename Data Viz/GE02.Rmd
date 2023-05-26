@@ -1,0 +1,149 @@
+---
+title: "Guided Exercise 02"
+author: "Mitch Rimerman"
+date: "10/2/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Data Import
+
+```{r files}
+library(tidyverse)
+player_data <- read.csv("Master.csv")
+pitching_data <- read.csv("Pitching.csv")
+salary_data <- read.csv("Salaries.csv")
+inflation_index <- read.csv("inflation.csv")
+```
+
+## Earned Run Average Graphs
+
+### Boxplots
+
+In order to create boxplots for ERA for each year, we must first convert the "year" variable from a continuous numerical variable to a categorical variable.
+
+```{r year conversion}
+pitching_data$yearID <- as.factor(pitching_data$yearID)
+```
+
+Now, we can create a graph of boxplots of ERA per year
+
+```{r era boxplots}
+ggplot(pitching_data) +
+  geom_boxplot(aes(x=yearID, y=ERA))
+```
+
+### Median ERA Graphs
+
+With the boxplot graph created, we can move on to a time series plot of median ERA. We must first create a summary table for pitching data.
+
+```{r st1}
+summary_pitching_ERA <- summarize(group_by(pitching_data, yearID), min=min(ERA,na.rm=T), Q1 = quantile(ERA,.25,na.rm=T), median=median(ERA,na.rm=T), 
+                                  Q3 = quantile(ERA,.75,na.rm=T), max=max(ERA,na.rm=T))
+summary_pitching_ERA
+```
+
+With our new summary table, we can create the time series plot, but we must convert the year variable back into its corresponding numeric value within the graph.
+
+```{r summary graph}
+summary_pitching_ERA$yearID <- as.numeric(as.character(summary_pitching_ERA$yearID))
+ggplot(summary_pitching_ERA) +
+  geom_line(aes(x=yearID, y=median))
+```
+
+Now, lets modify this graph to show the range between the first and third quartiles, and a single median ERA line.
+
+```{r sum graph 2}
+ggplot(summary_pitching_ERA) +
+  geom_ribbon(aes(x=yearID, ymin=Q1, ymax=Q3),fill="lightgreen") +
+  geom_line(aes(x=yearID, y=median),color="navy")
+```
+
+### Proportion Graph
+
+We can now move on to a graph of the proportions of Pitchers with high or low ERAs. To create this graph, we must first filter the data to require a minimum amount of 10 games, and change the ERA variable to a numeric variable. Then, we must summarize the filtered data to display the proportion of pitchers who had an ERA less than or equal to 3 and the proportion who had an ERA greater than or equal to 6.
+
+To filter the data and change the variable type, we use the following commands:
+
+```{r era filter}
+pitching_data_2 <- filter(pitching_data, G>=10)
+pitching_data_2$ERA <- as.numeric(pitching_data_2$ERA)
+```
+
+Now we can create our summary table.
+
+```{r st2}
+summary_pitching_ERA_2 <- summarize(group_by(pitching_data_2, yearID),
+                                    ERA_6_plus_proportion=mean(ERA >= 6, na.rm=T),
+                                    ERA_3_less_proportion=mean(ERA <= 3, na.rm=T))
+summary_pitching_ERA_2
+```
+
+With this summarized data, we can create a graph of the proportions of the two lines for ERA, after converting the year variable back into its corresponding numeric value within the graph.
+
+```{r proptable}
+summary_pitching_ERA_2$yearID <- as.numeric(as.character(summary_pitching_ERA_2$yearID))
+ggplot(summary_pitching_ERA_2) +
+  geom_line(aes(x=yearID, y=ERA_6_plus_proportion, color="6 of Higher")) +
+  geom_line(aes(x=yearID, y=ERA_3_less_proportion, color="3 or Under")) +
+  scale_color_manual(name="ERA", values=c("6 of Higher"="red","3 or Under"="darkblue")) +
+  labs(title="Proportion of Pitchers (pitching at least 10 games)\nWith Low and High ERAs by Year", x="Year",
+       y="Proportion") +
+  theme_classic()
+```
+
+### Salary Graph
+
+To create a graph of salary based on birth location, we must first join the player and salary data tables with an inner join function
+
+```{r join}
+salary_player_data <- inner_join(salary_data, player_data, by="playerID")
+```
+
+With the joined table, we can clean it up by selecting the columns that we want to keep, followed by creating a new variable for birth location.
+
+```{r}
+salary_player_data <- select(salary_player_data, "yearID", "playerID", "salary", "birthCountry")
+salary_player_data <- mutate(salary_player_data, usa_born = ifelse(birthCountry=="USA","USA","Non-USA"))
+```
+
+Now, we can summarize this data
+```{r}
+summary_ps <- summarize(group_by(salary_player_data, yearID, usa_born), Q1 =quantile(salary,.25,na.rm=T), 
+                        median=median(salary,na.rm=T), Q3 = quantile(salary,.75,na.rm=T),
+                        min=min(salary,na.rm=T), max=max(salary,na.rm=T))
+summary_ps
+```
+
+Now we must join the summarized data with the inflation rate and adjust for inflation. To join the tables, since we want to keep all of the data from the summary table, we must do a left join.
+
+```{r infadj}
+names(inflation_index)[1] <- "yearID"
+summary_ps_adj <- left_join(summary_ps, inflation_index, by="yearID")
+summary_ps_adj[summary_ps_adj$yearID==2015,"inflation2015"] <- 1
+summary_ps_adj <- mutate(summary_ps_adj, median_adj = median*inflation2015, 
+                         Q1_adj = Q1*inflation2015, Q3_adj = Q3*inflation2015,
+                         min_adj = min*inflation2015, max_adj = max*inflation2015)
+```
+
+
+With this summary table, we can recreate the given graph
+
+```{r psgraph}
+ggplot(summary_ps_adj) +
+  geom_ribbon(aes(x=yearID, ymin=Q1_adj, ymax=Q3_adj, fill=factor(usa_born, levels=c("USA","Non-USA"))),
+              alpha=.4) +
+  geom_line(aes(x=yearID, y=median_adj, color=factor(usa_born, levels=c("USA","Non-USA"))), size=.75) +
+  labs(title="Salaries of Middle 50% of Earners in Major League Baseball", x="Year", 
+       y="Annual Salary\n(Adjusted for Inflation)") +
+  scale_y_continuous(labels=c("0","2,000,000", "4,000,000", "6,000,000")) +
+  scale_color_manual(name="Median Salary", values=c("#F8766D", "#00BFC4"), 
+                     labels=c("Born in USA","Born outside USA")) +
+  scale_fill_manual(name="Middle 50% of Earners", values=c("#F8766D", "#00BFC4"), 
+                    labels=c("Born in USA","Born outside USA")) +
+  theme_classic()
+```
+

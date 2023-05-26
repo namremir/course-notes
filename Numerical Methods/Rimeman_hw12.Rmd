@@ -1,0 +1,150 @@
+---
+title: "Rimerman_HW12"
+author: "Mitch Rimerman"
+date: "2022-12-02"
+output: pdf_document
+---
+
+```{r setup, include=FALSE, results=FALSE, message=FALSE, warning=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(viridis)
+```
+
+## Problem 1
+### a
+
+\[
+f(x)=\sin x-\cos x
+\]
+
+\[
+f'(0)=\cos(0)+\sin(0)=1+0=1
+\]
+
+\[
+f''(x)=\cos x-\sin x\quad\Rightarrow\quad \max\{|f''(x)|: x\in\mathbb{R}\}=\sqrt{2}=M
+\]
+
+```{r p1a}
+h <- 10^(-(1:12))
+f <- function(x){
+  sin(x)-cos(x)
+}
+
+Fh <- rep(0,12)
+error <- rep(0,12)
+Mh <- rep(0,12)
+i=12
+for (i in 1:12) {
+  Fh[i] <- (f(0+h[i])-f(0))/h[i]
+  error[i] <- 1-Fh[i]
+  Mh[i] <- sqrt(2)*h[i]/2
+}
+answertable <- data.frame(h,Fh,error,Mh)
+names(answertable) <- c("h","Fh(0)","f'(0)-Fh(0)","Mh/2")
+knitr::kable(answertable, "simple", scientific=TRUE, digits=15)
+```
+
+The minimum error corresponds to the theoretical error as it is less than $Mh/2$ until $h<10^{-8}$, where rounding errors make the true error higher than the max expectation, which is especially prevalent when $h=10^{-12}$ (on my computer).
+
+### b
+
+\[
+f(x)=(1+x)^{-1}
+\]
+\[
+f'(1)=-(1+1)^{-2}=-1/4
+\]
+\[
+f'''(x)=-6(1+x)^{-4}\quad\Rightarrow\quad \max\{|f'''(x)|:x\in[0,2]\}=6=M
+\]
+
+```{r p1b}
+h <- 10^(-(1:12))
+f <- function(x){
+  1/(1+x)
+}
+
+Fh <- rep(0,12)
+error <- rep(0,12)
+Mh <- rep(0,12)
+i=12
+for (i in 1:12) {
+  Fh[i] <- (f(1+h[i])-f(1-h[i]))/(2*h[i])
+  error[i] <- (-1/4)-Fh[i]
+  Mh[i] <- h[i]^2
+}
+answertable <- data.frame(h,Fh,error,Mh)
+names(answertable) <- c("h","Fh(0)","f'(0)-Fh(0)","h^2*M/6")
+knitr::kable(answertable, "simple", scientific=TRUE, digits=30)
+```
+
+Similar to part a, the minimum error corresponds to the theoretical error as it is less than $h^2M/6$ until $h<10^{-6}$, where rounding errors make the true error higher than the max expectation, which is especially prevalent when $h=10^{-12}$ (on my computer).
+
+Note in this case $F_h(x)=\frac{f(x+h)-f(x-h)}{2h}$.
+
+\newpage
+## Problem 2
+\[
+\int x^2 \ln(x)dx= \frac{x^3\ln(x)}{3}-\int\frac{x^2}{3}=\frac{x^3\ln(x)}{3}-\frac{x^3}{9}=\frac{x^3}{9}(3\ln(x)-1)
+\]
+\[
+\int_1^3 x^2 \ln(x)dx=\left[\frac{x^3}{9}(3\ln(x)-1)\right]_1^3=9\ln(3)-\frac{26}{9}\approx6.9986217
+\]
+
+### a
+
+```{r p2a}
+f <- function(x){
+  x^2*log(x)
+}
+
+N <- 16
+h <- 2/N
+a <- 1+((1:N)-1)*h
+b <- 1+(1:N)*h
+approxint <- data.frame((h/2)*(sum(f(a))+sum(f(b))),abs((h/2)*(sum(f(a))+sum(f(b)))-(9*log(3)-26/9)))
+names(approxint) <- c("Approximate Intergral","Error")
+knitr::kable(approxint, "simple", scientific=TRUE, digits=30)
+
+N <- 32
+h <- 2/N
+a <- 1+((1:N)-1)*h
+b <- 1+(1:N)*h
+approxint <- data.frame((h/2)*(sum(f(a))+sum(f(b))),abs((h/2)*(sum(f(a))+sum(f(b)))-(9*log(3)-26/9)))
+names(approxint) <- c("Approximate Intergral","Error")
+knitr::kable(approxint, "simple", scientific=TRUE, digits=30)
+
+```
+
+### b
+
+```{r p2b}
+f <- function(x){
+  x^2*log(x)
+}
+
+N <- 16
+h <- 2/N
+a <- 1+((1:N)-1)*h
+b <- 1+(1:N)*h
+c <- (a+b)/2
+simpson <- f(a)+4*f(c)+f(b)
+approxint <- sum(simpson)*h/6
+approxint <- data.frame(sum(simpson)*h/6,abs(sum(simpson)*h/6-(9*log(3)-26/9)))
+names(approxint) <- c("Approximate Intergral","Error")
+knitr::kable(approxint, "simple", scientific=TRUE, digits=30)
+
+N <- 32
+h <- 2/N
+a <- 1+((1:N)-1)*h
+b <- 1+(1:N)*h
+c <- (a+b)/2
+simpson <- f(a)+4*f(c)+f(b)
+approxint <- sum(simpson)*h/6
+approxint <- data.frame(sum(simpson)*h/6,abs(sum(simpson)*h/6-(9*log(3)-26/9)))
+names(approxint) <- c("Approximate Intergral","Error")
+knitr::kable(approxint, "simple", scientific=TRUE, digits=30)
+```
+

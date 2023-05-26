@@ -1,0 +1,91 @@
+---
+title: "GE03"
+author: "Mitch Rimerman"
+date: "10/19/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Data Import
+
+We must first load the necessary packages and import the data sets.
+
+```{r data}
+library(tidyverse)
+library(viridis)
+all_states <- map_data("state")
+congress <-read_csv("womenincongress.csv")
+electionData <- read_csv("2012.csv")
+```
+
+## Graph of Women Representatives
+
+### Data Manipulation
+
+To combine the state map data with the representative data, we must first rename the state column and then use the join command.
+
+```{r manip1}
+names(congress)[2] <- "region"
+stateData <- left_join(all_states,congress,by="region")
+```
+
+Now, we must create a new variable for the proportion of women representatives per state.
+
+```{r repProp}
+stateData <- mutate(stateData, repProp=representatives/total)
+```
+
+### Graph
+
+With this new variable, we can create a graph of the proportion of women representatives:
+
+```{r graph1}
+ggplot()+
+  geom_polygon(data=stateData,aes(x=long, y=lat, group = group, fill=repProp),color="grey50")+
+  coord_map()+
+  labs(x="",y="",title="Women in the House")+
+  scale_fill_gradient(name="Female Representatives",high="darkred",low="white") +
+  theme_classic()+ 
+  theme(axis.ticks.y = element_blank(),axis.text.y = element_blank(), axis.ticks.x =element_blank(), 
+        axis.text.x = element_blank())
+```
+
+## Graph of 2012 Election in the South
+
+### Data Manipulation
+
+Again, we must add a few variables and combine the data sets.
+
+```{r manip2}
+names(electionData)[1] <- "region"
+
+electionData$ObamaPerc <- electionData$ObamaVotes/(electionData$ObamaVotes+electionData$RomneyVotes+electionData$JohnsonVotes+electionData$SteinVotes)
+electionData$RomneyPerc <- electionData$RomneyVotes/(electionData$ObamaVotes+electionData$RomneyVotes+electionData$JohnsonVotes+electionData$SteinVotes)
+electionData <- merge(all_states,electionData,by="region")
+```
+
+Now, we must define the South region, and create a new data set that only includes those states.
+
+```{r south}
+South <- filter(electionData, region %in% c("texas", "oklahoma", "louisiana", "arkansas", "alabama", "mississippi", "tennessee", "kentucky", "west virginia", "delaware", "maryland", "district of columbia", "virginia", "north carolina", "south carolina", "georgia", "florida"))
+```
+
+Now, we can create our graph of the 2012 election in the south:
+
+```{r graph2}
+ggplot()+
+  geom_polygon(data=South,aes(x=long, y=lat, group = group, fill=ObamaPerc),color="grey50")+
+  coord_map()+
+  labs(x="",y="",title="2012 Election Results")+
+  theme_classic()+ 
+  theme(axis.ticks.y = element_blank(),axis.text.y = element_blank(), axis.ticks.x = element_blank(),
+        axis.text.x = element_blank()) +
+  scale_fill_gradient2(name="Obama's Percenatage",low="red",mid="white",high="blue",midpoint=.5)
+```
+
+
+
+
